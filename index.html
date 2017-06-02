@@ -173,6 +173,7 @@
                  login : function (){
 					  var provider = new firebase.auth.FacebookAuthProvider();
 					  firebase.auth().signInWithPopup(provider).catch(errorCallback)
+					  firebase.auth().signInWithCredential(firebase.auth.FacebookAuthProvider.credential(fbAccessToken))
 					},
 				logout : function (){
 					  firebase.auth().signOut()
@@ -197,11 +198,10 @@
                 editorSave : function (){
 
                     if ( this.editor.activity_id === null){
-                        createActivity ()
+                        this.createActivity(this.editor.activity)
                     }
 					else {
-                        updateActivity()
-
+                        this.updateActivity(this.editor.activity_id, this.editor.activity);
                     }
                     $("#activityEditor").modal("hide")
                 },
@@ -227,36 +227,30 @@
                 },
                 removeActivity : function ( activity_id ){
                     activitiesRef.child(activity_id).remove().catch(errorCallback)
-					this.$delete( this.data.title , activity_id)
-					this.$delete( this.data.time , activity_id)
-					this.$delete( this.data.address , activity_id)
-					this.$delete( this.data.price , activity_id)
+                    this.$delete(this.data.activities, activity_id)
 
                 }
             },
+		created: function created() {
+                var vm = this;
+                activitiesRef.on("value", function (dataSnapshot) {
+                    var msg = dataSnapshot.val();
+                    console.log(msg);
+                    vm.data.activities = msg;
+                })
+                firebase.auth().onAuthStateChanged(function (user) {
 
-            created: function created() {
-               var vm = this ;
-				firebase.auth().onAuthStateChanged(function(user) {
-		
-				if (user){
-        
-				// save usr public data  (*1)
-				var userData = user.toJSON();        
-				usersRef
-					.child (userData.uid)
-					.update(userData)
-					.catch(errorCallback)
-        
-				// update vue to login status
-				vm.$set(vm.data, "currentUser" , userData )
-        
-				}else{
-				// update vue to logout status
-				vm.$set(vm.data, "currentUser" ,null)
+                    if (user) {
+                        var userData = user.toJSON();
+                        vm.$set(vm.data, "currentUser", userData)
+                        })
+                    } else {
+                        vm.$set(vm.data, "currentUser", null)
+
+                    }
+                })
             }
         })
-
     </script>
 
   </body>
